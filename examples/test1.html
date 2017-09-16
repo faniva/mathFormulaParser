@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+
+
+<script src="../src/formula.js"></script>
+
+<script>
+
+    var variables = [
+        {
+            "name" : "multiplier",
+            "type" : "float",
+            "value" : 1.1
+        },
+        {
+            "name" : "basePrice",
+            "type" : "float",
+            "value" : 20000
+        }
+
+    ];
+
+
+    //var f1 = new Formula("basePrice * ( multiplier / moneyRatio ) - something", variables);
+    var f1 = new Formula("basePrice * multiplier", variables);
+
+    f1.init();
+    debugger;
+    f1.execute();
+</script>
+
+</body>
+</html>
