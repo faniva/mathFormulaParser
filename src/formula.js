@@ -16,6 +16,9 @@ function Formula(formula, variables){
 }
 
 Formula.prototype.init = function(){
+    // Instantiate a formula factory
+    this.formulaFactory = new FormulaFactory();
+    // Parse the formula
     this.parseMathFormula(this._formula);
     console.log(this)
 };
@@ -93,6 +96,7 @@ Formula.prototype.execute = function(){
 
     // If operands and elements have only 1 item, then the final result is that item
     if(this._elements.length === 1 && this._operands.length === 1 ){
+
         return this._operands[0]; // This is the final result
     }
 
@@ -101,7 +105,7 @@ Formula.prototype.execute = function(){
     // 2. Scan the formula for MULTIPLICATION or DIVISION operations
     // 3. Scan for any other operations (addition and subtraction)
 
-    // 1.
+    // 1. Scan the formula for PARENTHESIS operations
     var self = this;
     this._operands.forEach(function(operand, index){
 
@@ -119,7 +123,9 @@ Formula.prototype.execute = function(){
         }
     });
 
-    // 2.
+    // At this point all operands of our formula are either variables or values, no parenthesis
+
+    // 2. Scan the formula for MULTIPLICATION or DIVISION operations
     for(var i=0; i<this._elements.length; i++){
 
         if( i%2 === 0 ) continue; // We only look for operators on non-even indexes
@@ -127,117 +133,116 @@ Formula.prototype.execute = function(){
         var operator = this.isOperator( this._elements[i] );
 
         // Stop if found multiplication or division operator
-        if( operator && (operator === '*' || operator === '/') ){
-            // It is an operator and its multiplication
-            var execFn = this.getOperatorFunction(operator);
+        if( operator ){
+            if( operator === '*' || operator === '/'){
+                // It is an operator and its multiplication
+                var execFn = this.getOperatorFunction(operator);
 
-            // Validate the 2 operands
-            var input1 = this._elements[i-1],
-                input2 = this._elements[i+1];
+                // Run the operation and get the result
+                var result = self.execOperatorFunction(this._elements[i-1], this._elements[i+1], execFn); // Returns the numeric value for this operation
 
-            if( isNaN(input1) ){
-                // Is not a number, therefore make sure its a declared variable
-                // This is a string
-                input1 = self.isVariable(input1); // If its a variable returns its value
-                if(!input1){
-                    console.log('error, variable not defined');
-                    break;
-                }
+                // Update the formula with the new value removing the operands that took part of the function
+                this._elements.splice(i-1, 3);
+                this._elements.splice(i-1, 0, result);
+
+                // So if we had something like this :  5 * 8 , now we have replaced those 3 array items with 40
+
+                // debugger;
+
+                // Reconstruct formula from the elements and create a new Formula object
+                var newFormula = self.formulaFactory.createFormula(this._elements.join(' '), self._variables);
+                newFormula.init();
+
+                // todo maybe instead of creating new formula iunstances just update the elements and execute it again
+                // We have to exit the execute function
+                return newFormula.execute();
+
             }
 
-            if( isNaN(input2) ){
-                // Is not a number, therefore make sure its a declared variable
-                // This is a string
-                input2 = self.isVariable(input2); // If its a variable returns its value
-                if(!input2){
-                    console.log('error, variable not defined');
-                    break;
-                }
-            }
-
-
-            // Execute the function
-            var value = execFn(input1, input2);
-            // Update the formula with the new value removing the operands that took part of the function
-            self._elements.splice(i-1, 3);
-            self._elements.splice(i-1, 0, value);
-
-            // debugger;
-
-            // Reconstruct formula from the elements
-            var frm = self._elements.join(' ');
-            var newFormula = new Formula(frm);
-            newFormula.init();
-            newFormula.execute();
-            // todo maybe instead of creating new formula iunstances just update the elements and execute it again
-            break;
 
         } else {
             // It is not an operator. Formula is not valid
-            console.log('Operator is not defined or is not addition or subtraction');
+            console.log('Operator is not defined');
+            return false;
         }
     }
 
 
-    // 3.
-    for(var k=0; k<this._elements.length; k++){
+    // 3. Scan for any other operations (addition and subtraction)
+    for(var k=0; k<this._elements.length; k++) {
 
-        if( k%2 === 0 ) continue; // We only look for operators on non-even indexes
+        if (k % 2 === 0) continue; // We only look for operators on non-even indexes
 
-        var operator = this.isOperator( this._elements[k] );
+        var operator = this.isOperator(this._elements[k]);
 
-        // Stop if found addition or subtraction operator
-        if( operator && (operator === '+' || operator === '-')  ){
-            // It is an operator and its addition or subtraction
-            var execFn = this.getOperatorFunction(operator);
+        // Stop if found sum or subtraction operator
+        if (operator) {
+            if (operator === '+' || operator === '-') {
 
-            // Validate the 2 operands
-            var input1 = this._elements[k-1],
-                input2 = this._elements[k+1];
+                var execFn = this.getOperatorFunction(operator);
 
-            if( isNaN(input1) ){
-                // Is not a number, therefore make sure its a declared variable
-                // This is a string
-                input1 = self.isVariable(input1); // If its a variable returns its value
-                if(!input1){
-                    console.log('error, variable not defined');
-                    return false;
-                }
+                // Run the operation and get the result
+                var result = self.execOperatorFunction(this._elements[k - 1], this._elements[k + 1], execFn); // Returns the numeric value for this operation
+
+                // Update the formula with the new value removing the operands that took part of the function
+                this._elements.splice(k - 1, 3);
+                this._elements.splice(k - 1, 0, result);
+
+                // So if we had something like this :  5 + 8 , now we have replaced those 3 array items with 13
+
+                // debugger;
+
+                // Reconstruct formula from the elements and create a new Formula object
+                var newFormula = self.formulaFactory.createFormula(this._elements.join(' '), self._variables);
+                newFormula.init();
+                // todo maybe instead of creating new formula iunstances just update the elements and execute it again
+                // We have to exit the execute function
+                return newFormula.execute();
+
             }
 
-            if( isNaN(input2) ){
-                // Is not a number, therefore make sure its a declared variable
-                // This is a string
-                input2 = self.isVariable(input2); // If its a variable returns its value
-                if(!input2){
-                    console.log('error, variable not defined');
-                    return false;
-                }
-            }
-
-
-            // Execute the function
-            var value = execFn(input1, input2);
-            // Update the formula with the new value removing the operands that took part of the function
-            self._elements.splice(k-1, 3);
-            self._elements.splice(k-1, 0, value);
-
-            // debugger;
-
-            // Reconstruct formula from the elements
-            var frm = self._elements.join(' ');
-            var newFormula = new Formula(frm);
-            newFormula.init();
-            newFormula.execute();
-            // todo maybe instead of creating new formula iunstances just update the elements and execute it again
-            break;
 
         } else {
             // It is not an operator. Formula is not valid
-            console.log('Operator is not defined or is not addition or subtraction');
+            console.log('Operator is not defined');
+            return false;
+        }
+
+
+    }
+
+
+};
+
+Formula.prototype.execOperatorFunction = function(a,b, operatorFn){
+
+    // Validate the 2 operands
+    // ===============================================================
+    if( isNaN(a) ){
+        // Is not a number, therefore make sure its a declared variable
+        // This is a string
+        a = this.isVariable(a); // If its a variable returns its value
+        if(!a){
+            console.log('error, variable not defined');
+            return false;
         }
     }
 
+    if( isNaN(b) ){
+        // Is not a number, therefore make sure its a declared variable
+        // This is a string
+        b = this.isVariable(b); // If its a variable returns its value
+        if(!b){
+            console.log('error, variable not defined');
+            return false;
+        }
+    }
+
+    // At this point, both operands are numeric values
+    // Continue...
+
+    // Execute the function
+    return operatorFn(a, b);
 
 };
 
@@ -309,3 +314,10 @@ Formula.prototype.isVariable = function(input){
     return false;
 
 };
+
+function FormulaFactory(){
+    this.createFormula  = function(expression, variables){
+        console.log('Creating new formula...');
+        return new Formula(expression, variables)
+    }
+}
