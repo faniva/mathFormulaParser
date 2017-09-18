@@ -20,6 +20,7 @@ Formula.prototype.init = function(){
     this.formulaFactory = new FormulaFactory();
     // Parse the formula
     this.parseMathFormula(this._formula);
+    console.log('New formula created');
     console.log(this)
 };
 
@@ -97,7 +98,7 @@ Formula.prototype.execute = function(){
     // If operands and elements have only 1 item, then the final result is that item
     if(this._elements.length === 1 && this._operands.length === 1 ){
 
-        return this._operands[0]; // This is the final result
+        return parseFloat(this._operands[0]); // This is the final result
     }
 
     // To execute the math formula these are the steps to follow
@@ -113,13 +114,18 @@ Formula.prototype.execute = function(){
         if(operand.charAt(0) === '(' && operand.slice(-1) === ')' ){
             // Found a parenthesis
             // Remove the parenthesis
-            operand = operand.slice(1,-1);
+            operand = operand.slice(1,-1).trim();
 
-            var subFormula = new Formula(operand);
+            var subFormula = self.formulaFactory.createFormula(operand, self._variables);
             subFormula.init();
 
+            // debugger;
+
             // get the value of it
-            self._operands[index] = subFormula.execute();
+            var parenthesisValue = subFormula.execute();
+            // Also update the elements array
+            self._elements[self._elements.indexOf(self._operands[index])] = parenthesisValue;
+            self._operands[index] = parenthesisValue;
         }
     });
 

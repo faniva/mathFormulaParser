@@ -24,13 +24,18 @@
             "name" : "basePrice",
             "type" : "float",
             "value" : 20000
+        },
+        {
+            "name" : "moneyRatio",
+            "type" : "float",
+            "value" : 1000
         }
 
     ];
 
 
     //var f1 = new Formula("basePrice * ( multiplier / moneyRatio ) - something", variables);
-    var f1 = new Formula("basePrice * multiplier", variables);
+    var f1 = new Formula("basePrice * multiplier - ( 2000 * 4 )", variables);
 
     f1.init();
 //    debugger;
