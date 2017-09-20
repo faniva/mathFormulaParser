@@ -12,12 +12,12 @@ function Formula(formula, variables){
     this._operands = [];
     this._operators = [];
     this._variables = variables || [];
+    // Instantiate a formula factory
+    this.formulaFactory = new FormulaFactory();
 
 }
 
 Formula.prototype.init = function(){
-    // Instantiate a formula factory
-    this.formulaFactory = new FormulaFactory();
     // Parse the formula
     this.parseMathFormula(this._formula);
     console.log('New formula created');
@@ -316,10 +316,8 @@ Formula.prototype.isOperator = function(op){
 };
 
 Formula.prototype.isVariable = function(input){
-    // Check if argument is a declared and valid math operator
-
+    // Check if variable is a declared variable
     for(var i=0; i<this._variables.length; i++){
-
         if(this._variables[i].name === input){
             return this._variables[i].value;
         }
