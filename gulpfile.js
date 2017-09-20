@@ -1,6 +1,7 @@
 const gulp = require('gulp');
 const uglify = require('gulp-uglify');
 const rename = require("gulp-rename");
+const header = require('gulp-header');
 
 // const concat = require('gulp-concat');
 // const less = require('gulp-less');
@@ -20,10 +21,23 @@ gulp.task('message', function(){
     return console.log('Gulp is running...');
 });
 
+// using data from package.json
+var pkg = require('./package.json');
+var banner = ['/**',
+    ' * <%= pkg.name %> - <%= pkg.description %>',
+    ' * @version v<%= pkg.version %>',
+    ' * @link <%= pkg.homepage %>',
+    ' * @author <%= pkg.author %>',
+    ' * @license <%= pkg.license %>',
+    ' */',
+    ''].join('\n');
+
+
 // Minify JS
 gulp.task('minifyjs', function(){
     gulp.src('src/*.js')
         .pipe(uglify())
+        .pipe(header(banner, { pkg : pkg } ))
         .pipe(rename({ suffix: '.min' }))
         .pipe(gulp.dest('dist'));
 });
@@ -32,4 +46,3 @@ gulp.task('minifyjs', function(){
 gulp.task('watch', function(){
     gulp.watch('src/*.js', ['minifyjs']);
 });
-

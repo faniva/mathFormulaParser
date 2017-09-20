@@ -24,6 +24,7 @@
   "homepage": "https://github.com/josefano/mathFormulaParser#readme",
   "devDependencies": {
     "gulp": "^3.9.1",
+    "gulp-header": "^1.8.9",
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^3.0.0"
   }

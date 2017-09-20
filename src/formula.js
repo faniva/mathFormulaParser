@@ -294,6 +294,14 @@ Formula.prototype.getOperatorFunction = function(operator){
             )
         }
 
+        case '^' : {
+            return (
+                function(a,b){
+                    return Math.pow(a,b);
+                }
+            )
+        }
+
         default : break;
 
     }
@@ -301,7 +309,7 @@ Formula.prototype.getOperatorFunction = function(operator){
 
 Formula.prototype.isOperator = function(op){
     // Check if argument is a declared and valid math operator
-    var validOperators = ['+', '-', '*', '/', '%'];
+    var validOperators = ['+', '-', '*', '/', '%', '^'];
 
     return validOperators.indexOf(op) !== -1 ? validOperators[validOperators.indexOf(op)] : false
 
@@ -324,6 +332,6 @@ Formula.prototype.isVariable = function(input){
 function FormulaFactory(){
     this.createFormula  = function(expression, variables){
         console.log('Creating new formula...');
-        return new Formula(expression, variables)
+        return new Formula(expression, variables);
     }
 }
