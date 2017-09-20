@@ -29,6 +29,7 @@ var banner = ['/**',
     ' * @link <%= pkg.homepage %>',
     ' * @author <%= pkg.author %>',
     ' * @license <%= pkg.license %>',
+    ' * @lastModified <%= new Date() %>',
     ' */',
     ''].join('\n');
 

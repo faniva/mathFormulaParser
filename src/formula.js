@@ -327,6 +327,20 @@ Formula.prototype.isVariable = function(input){
 
 };
 
+Formula.prototype.addVariable = function(variable){
+    // Validate correct input
+    if(!variable || !variable.name || !variable.type || !variable.value)
+        return false;
+
+    // Add to the variables array
+    this._variables.push({
+        name : variable.name,
+        type : variable.type,
+        value : variable.value
+    });
+
+};
+
 function FormulaFactory(){
     this.createFormula  = function(expression, variables){
         console.log('Creating new formula...');
