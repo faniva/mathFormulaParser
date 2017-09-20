@@ -7,7 +7,7 @@
 
 function Formula(formula, variables){
 
-    this.id = this.getRandomId();
+    this._id = this.getRandomId();
     this._formula = formula;
     this._elements = [];
     this._operands = [];
@@ -40,7 +40,9 @@ Formula.prototype.parseMathFormula = function(formula){
 
 Formula.prototype.getElementsRecursive = function(substr){
 
-    var indexAt, skip = false;
+    debugger;
+
+    var indexAt = -1, skip = false;
     for(var i=0; i<substr.length; i++){
         if(substr[i]=== ' ' && skip === false && substr[i+1] !== ' ' ){
             indexAt = i;
@@ -67,7 +69,7 @@ Formula.prototype.getElementsRecursive = function(substr){
         this._elements.push( substr.slice(0, indexAt).trim()  );
         this.getElementsRecursive( substr.slice(indexAt+1).trim()  )
     } else {
-        this._elements.push( substr.slice(0) );
+        this._elements.push( substr.slice(0).trim() );
     }
 };
 
@@ -96,10 +98,14 @@ Formula.prototype.getOperators = function(){
  */
 Formula.prototype.execute = function(){
 
+    console.log('Executing formula...')
+
     // If operands and elements have only 1 item, then the final result is that item
     if(this._elements.length === 1 && this._operands.length === 1 ){
-
-        return parseFloat(this._operands[0]); // This is the final result
+        var result = parseFloat(this._operands[0]); 
+        console.log('The final result:')
+        console.log(result)
+        return result; // This is the final result
     }
 
     // To execute the math formula these are the steps to follow
@@ -328,17 +334,14 @@ Formula.prototype.isVariable = function(input){
 
 };
 
-Formula.prototype.addVariable = function(variable){
+Formula.prototype.addVariable = function(v){
     // Validate correct input
-    if(!variable || !variable.name || !variable.type || !variable.value)
+    if(!v || !v.name || !v.type || !v.value)
         return false;
 
-    // Add to the variables array
-    this._variables.push({
-        name : variable.name,
-        type : variable.type,
-        value : variable.value
-    });
+
+    // Add to the vs array
+    this._variables.push(v);
 
 };
 
