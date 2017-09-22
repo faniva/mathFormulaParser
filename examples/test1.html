@@ -34,11 +34,14 @@
     ];
 
 
-    //var f1 = new Formula("basePrice * ( multiplier / moneyRatio ) - something", variables);
-    var f1 = new Formula("basePrice * multiplier - ( 2000 * 4 )", variables);
+//    var f1 = new Formula("basePrice * ( multiplier / moneyRatio )", variables);  // Returns 22
+//    var f1 = new Formula("basePrice * multiplier - ( 2000 * 4 )", variables); // Returns 14000
+//    var f1 = new Formula("(4 - 2 ^ 3 + 1) * 18", variables); // returns -54
+//    var f1 = new Formula("(4 - 2 ^ (16 / 4) + 1) * 18", variables); // returns -198
+    var f1 = new Formula("(4 - 2 ^ (16 / (8 / 2) ) + 1) * 18", variables); // returns -198
 
-    f1.init();
-    f1.execute();
+    //Run the formula
+    f1.run();
 //    debugger;
     // console.log(f1.execute());
 </script>

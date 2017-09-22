@@ -1,4 +1,14 @@
 /**
+ * Formulify
+ * Formulify is a handy math expression evaluator for javascript
+ * Allows you to define an arithmetical expression, declare variables and execute the function to get a math value in return
+ * An "infix" expression evaluator for javascript
+ * @author Jose Fano
+ * @version 1.0
+*/
+
+
+/**
  *  Takes a math expression as a string and converts it into an executable math operation
  * @param formula
  * @param variables
@@ -13,15 +23,23 @@ function Formula(formula, variables){
     this._operands = [];
     this._operators = [];
     this._variables = variables || [];
-    // Instantiate a formula factory
-    this._formulaFactory = new FormulaFactory();
     this._execHistory = [];
     this._state  = []; // Data structure to hold the different states which the formula goes through
 
 }
 
+/**
+ * Executes the formula and returns its value
+ */
+Formula.prototype.run = function(){
+    // Initialize the formula
+    this.init();
+    // Execute the formula and return its value
+    return this.execute();
+};
+
 Formula.prototype.init = function(){
-    // Parse the formula
+    // Parses the formula
     this.parseMathFormula(this._formula);
     console.log('New formula created');
     console.log(this)
@@ -42,7 +60,7 @@ Formula.prototype.parseMathFormula = function(formula){
 
 Formula.prototype.getElementsRecursive = function(str){
 
-    var indexAt = -1, skip = false;
+    var indexAt = -1, skip = false, skipCount = 0;
     // Loop through the entire string
     for(var i=0; i<str.length; i++){
 
@@ -55,13 +73,20 @@ Formula.prototype.getElementsRecursive = function(str){
         // If open parenthesis is found, skip until we find the closing parenthesis
         if(str[i] === '(') {
             skip = true;
+            skipCount++;
             continue;
         }
 
         // We are looking for the closing parenthesis
-        if(skip &&  str[i] === ')'){
-            indexAt = i+1;
-            break;
+        if( skip &&  str[i] === ')'  ){
+            if(skipCount > 1){
+                // Means that we found parenthesis inside parenthesis
+                skipCount--;
+            } else {
+                indexAt = i+1;
+                break;
+            }
+
         }
 
     }
@@ -103,17 +128,24 @@ Formula.prototype.getOperators = function(){
  */
 Formula.prototype.execute = function(){
 
-    console.log('Executing formula...')
+    console.log('Executing formula...');
 
     
-    debugger;
+    // debugger;
 
     // If operands and elements have only 1 item, then the final result is that item
     if(this._elements.length === 1 && this._operands.length === 1 ){
-        var result = parseFloat(this._operands[0]); 
-        console.log('The final result:')
-        console.log(result)
-        return result; // This is the final result
+
+        if(isNaN(this._operands[0])){
+            console.error('Error. Result value is not valid');
+            return false;
+        } else {
+            var result = Number(this._operands[0]);
+            console.log('The final result:');
+            console.log(result);
+            return result; // This is the final result
+        }
+
     }
 
     // To execute the math formula these are the steps to follow
@@ -124,14 +156,25 @@ Formula.prototype.execute = function(){
     // 4. Scan for ADDITIONS or SUBSTRACTIONS
 
     // 1. Scan the formula for PARENTHESIS operations
-    var self = this;
 
-    
     var newFormula  = this.execFirstOrderOperations();
 
-    newFormula.execSecondOrderOperations();
-    newFormula.execThirdOrderOperations();
-    newFormula.execFourthOrderOperations();
+    // debugger;
+
+    var secondOrderOpResult = newFormula.execSecondOrderOperations();
+    if(typeof secondOrderOpResult != 'undefined' && secondOrderOpResult != false ){
+        return secondOrderOpResult;
+    }
+
+    var thirdOrderOpResult = newFormula.execThirdOrderOperations();
+    if(typeof thirdOrderOpResult != 'undefined' && thirdOrderOpResult != false ){
+        return thirdOrderOpResult;
+    }
+
+    var fourthOrderOpResult = newFormula.execFourthOrderOperations();
+    if(typeof fourthOrderOpResult != 'undefined' && fourthOrderOpResult != false ){
+        return fourthOrderOpResult;
+    }
 
     // this._operands.forEach(function(operand, index){
 
@@ -278,7 +321,7 @@ Formula.prototype.execOperatorFunction = function(a,b, operatorFn){
     // Continue...
 
     // Execute the function
-    return operatorFn(a, b);
+    return operatorFn(Number(a), Number(b));
 
 };
 
@@ -363,7 +406,7 @@ Formula.prototype.addVariable = function(v){
         return false;
 
 
-    // Add to the vs array
+    // Add to the variables array
     this._variables.push(v);
 
 };
@@ -371,7 +414,7 @@ Formula.prototype.addVariable = function(v){
 Formula.prototype.execFirstOrderOperations = function(){
 
     // newElements will be the new elements with the parenthesis values replaced
-    var newElements = this._elements,
+    var newElements = this._elements.slice(),
         foundParenthesis = false
     ;
 
@@ -384,20 +427,21 @@ Formula.prototype.execFirstOrderOperations = function(){
             // Found a parenthesis
             foundParenthesis = true;
 
-
             // Remove the parenthesis
             operand = operand.slice(1,-1).trim();
 
             // The parenthesis operand becomes a formula of its own
-            var subFormula = this._formulaFactory.createFormula(operand, this._variables);
-            
+            var subFormula = this.createFormula(operand, this._variables);
+            this.addState(subFormula);
             // Add it to our formula history logger
             // this._execHistory.push(subFormula);
             // Init the subFormula
-            subFormula.init();
-            // get the value of it
-            var parenthesisValue = subFormula.execute();
-      
+            // subFormula.init();
+            // // get the value of it
+            // var parenthesisValue = subFormula.execute();
+
+            var parenthesisValue = subFormula.run();
+
             // Also update the elements array
             newElements[this._elements.indexOf(this._operands[i])] = parenthesisValue;
 
@@ -411,7 +455,7 @@ Formula.prototype.execFirstOrderOperations = function(){
     if(foundParenthesis){
         // Build the formula expression out of the elements array and ...
         // Create a new formula and record a new formula state with the value obtained
-        var newFormulaState = this._formulaFactory.createFormula(newElements.join(' '), this._variables);
+        var newFormulaState = this.createFormula(newElements.join(' '), this._variables);
         newFormulaState.init();
 
         this.addState(newFormulaState);
@@ -423,11 +467,10 @@ Formula.prototype.execFirstOrderOperations = function(){
     }
  
  
-}
+};
 
 
 Formula.prototype.execSecondOrderOperations = function(){
-
 
     for(var i=0; i< this._elements.length; i++){
 
@@ -445,7 +488,7 @@ Formula.prototype.execSecondOrderOperations = function(){
                 var result = this.execOperatorFunction(this._elements[i-1], this._elements[i+1], execFn); // Returns the numeric value for this operation
                 
                 // The elements to construct the new formula from
-                var newElements = this._elements;
+                var newElements = this._elements.slice(); // copies the array
                 
                 
                 // Update the formula with the new value removing the operands that took part of the function
@@ -454,21 +497,20 @@ Formula.prototype.execSecondOrderOperations = function(){
 
                 // So if we had something like this :  5 + 8 , now we have replaced those 3 array items with 13
 
-                // debugger;
+
 
                 // Reconstruct formula from the elements and create a new Formula object
-                var newFormula = this._formulaFactory.createFormula(newElements.join(' '), this._variables);
-                newFormula.init();
+                var newFormula = this.createFormula(newElements.join(' '), this._variables);
+                // newFormula.init();
                 // todo maybe instead of creating new formula iunstances just update the elements and execute it again
                 // We have to exit the execute function
 
                 this.addState(newFormula);
 
 
-                return newFormula.execute();
-                
-            } else {
-                break;
+                // return newFormula.execute();
+                return newFormula.run();
+
             }
 
         } else {
@@ -482,7 +524,7 @@ Formula.prototype.execSecondOrderOperations = function(){
 
 
     }
-}
+};
 
 
 
@@ -506,7 +548,7 @@ Formula.prototype.execThirdOrderOperations = function(){
                 var result = this.execOperatorFunction(this._elements[i-1], this._elements[i+1], execFn); // Returns the numeric value for this operation
                 
                 // The elements to construct the new formula from
-                var newElements = this._elements;
+                var newElements = this._elements.slice(); // copies the array
                 
                 
                 // Update the formula with the new value removing the operands that took part of the function
@@ -518,19 +560,17 @@ Formula.prototype.execThirdOrderOperations = function(){
                 // debugger;
 
                 // Reconstruct formula from the elements and create a new Formula object
-                var newFormula = this._formulaFactory.createFormula(newElements.join(' '), this._variables);
-                newFormula.init();
+                var newFormula = this.createFormula(newElements.join(' '), this._variables);
+                // newFormula.init();
                 // todo maybe instead of creating new formula iunstances just update the elements and execute it again
                 // We have to exit the execute function
 
                 this.addState(newFormula);
 
 
-                return newFormula.execute();
+                return newFormula.run();
 
                 
-            } else {
-                break;
             }
 
         } else {
@@ -544,7 +584,7 @@ Formula.prototype.execThirdOrderOperations = function(){
 
 
     }
-}
+};
 
 
 Formula.prototype.execFourthOrderOperations = function(){
@@ -566,7 +606,7 @@ Formula.prototype.execFourthOrderOperations = function(){
                 var result = this.execOperatorFunction(this._elements[i-1], this._elements[i+1], execFn); // Returns the numeric value for this operation
                 
                 // The elements to construct the new formula from
-                var newElements = this._elements;
+                var newElements = this._elements.slice(); // copies the array
 
 
                 // Update the formula with the new value removing the operands that took part of the function
@@ -578,19 +618,17 @@ Formula.prototype.execFourthOrderOperations = function(){
                 // debugger;
 
                 // Reconstruct formula from the elements and create a new Formula object
-                var newFormula = this._formulaFactory.createFormula(newElements.join(' '), this._variables);
-                newFormula.init();
+                var newFormula = this.createFormula(newElements.join(' '), this._variables);
+                // newFormula.init();
                 // todo maybe instead of creating new formula iunstances just update the elements and execute it again
                 // We have to exit the execute function
 
                 this.addState(newFormula);
 
 
-                return newFormula.execute();
+                return newFormula.run();
 
                 
-            } else {
-                break;
             }
 
         } else {
@@ -606,7 +644,7 @@ Formula.prototype.execFourthOrderOperations = function(){
     }
 
 
-}
+};
 
 
 
@@ -637,11 +675,10 @@ Formula.prototype.addState = function(formulaObj){
     this._state.push(formulaObj);
 };
 
-
-
-function FormulaFactory(){
-    this.createFormula  = function(formula, variables){
-        console.log('Creating new formula...');
-        return new Formula(formula, variables);
-    }
-}
+/**
+ * Add a formula state
+ */
+Formula.prototype.createFormula = function(formula, variables){
+    console.log('Creating new formula...');
+    return new Formula(formula, variables);
+};
